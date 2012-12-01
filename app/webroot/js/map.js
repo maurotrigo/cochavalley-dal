@@ -44,11 +44,16 @@ function parseJason(data) {
  * si la fila tiene más de 2 columnas, usar la 1ra y 2da como valor y nombre respectivamente
  * si la fila tiene una columna, se usa como valor y nombre
  * */
-function populateSelect(data, elementSelector) {
+function populateSelect(data, elementSelector, emptyOption) {
 	result = false;
 	if (data != '') {
 		$(elementSelector).empty();
-		$(elementSelector).append('<option></option>');
+		
+		if (typeof emptyOption == "undefined") {
+			emptyOption = "";
+		}
+		
+		$(elementSelector).append('<option value="">' + emptyOption + '</option>');
 		result = true;
 	}
 	
