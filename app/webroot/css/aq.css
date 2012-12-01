@@ -1,1 +1,5 @@
 @charset "utf-8";
+
+ul.noStyle { margin-left: 0; padding-left: 0; list-style: none; }
+
+#map_canvas { border-radius: 4px; }
