@@ -126,7 +126,7 @@ function initialize() {
 		});
 	};
 	 
-	$.getJSON("http://localhost:8083/tweets/?callback=?", 
+	$.getJSON("http://50.57.83.147:8083/tweets/?callback=?", 
 		function(jsondata){
 			$.each(jsondata.results, function(i,item){
 				lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
