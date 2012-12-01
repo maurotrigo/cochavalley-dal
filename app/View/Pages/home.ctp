@@ -159,6 +159,9 @@ function initialize() {
 		
 	   if(crime_type=='HECHO DE TRANSITO')
 		image = 'http://www.onsc.gob.bo/crimen/icons/crimescene.png';
+	   else if (crime_type=='TWITTER'){
+		 image = 'http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/en/devnet/enterprise-platform/twitter/twitter_small_1307050985_2229.png.adimg.mw.58.png';
+	   }
 	   else{
 		 image = 'http://www.onsc.gob.bo/crimen/icons/theft.png';
 	   }
@@ -184,6 +187,25 @@ function initialize() {
 		createMarker(coordinate,crime_type);
 	  }
 	});
+
+
+	$.getJSON("http://localhost:8083/tweets/?callback=?", 
+		function(jsondata){
+			$.each(jsondata.results, function(i,item){
+				lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
+				long = (Math.random() * (68.15 - 68.1) + 68.1)*-1;
+				console.log(item.id_str);
+				if(item.geo!=null){
+					if(item.geo.coordinates[0]!=0.000000){
+						lat = item.geo.coordinates[0];
+						long = item.geo.coordinates[1];
+					}
+				}
+				var coordinate = new google.maps.LatLng(lat, long);
+				createMarker(coordinate,'TWITTER');
+			});
+		}
+	);
 	
 	areaLayer = new google.maps.FusionTablesLayer({
 		query: {
@@ -252,7 +274,10 @@ $(document).ready(function () {
 				<div id="map_canvas"></div>
 			</div>
         </div><!--/span-->
-		<div class="span2"></div>
+		<div class="span2">
+			<?php echo $this->element('twitter'); ?>
+			
+		</div>
       </div><!--/row-->
       <hr>
 <script type="text/javascript">
