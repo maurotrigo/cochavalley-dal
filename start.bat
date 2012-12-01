@@ -1,0 +1,11 @@
+mkdir app\Config
+mkdir app\tmp\cache
+mkdir app\tmp\cache\models
+mkdir app\tmp\cache\persistent
+mkdir app\tmp\cache\views
+mkdir app\tmp\logs
+mkdir app\tmp\sessions
+mkdir app\tmp\tests
+mkdir app\vendors
+mkdir plugins
+mkdir vendors
