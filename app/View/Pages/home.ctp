@@ -433,7 +433,7 @@ $(document).ready(function () {
 		<?php echo $this->element('twitter'); ?>
 	</div>
 </div><!--/row-->
-      <hr>
+	
 		
 <form class="form-horizontal save-form" style="display: none">
   <div class="control-group">
