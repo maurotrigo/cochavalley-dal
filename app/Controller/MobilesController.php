@@ -6,10 +6,9 @@ class MobilesController extends AppController
 	
 	var $components = array('RequestHandler');
         
-//APPSEARCH2/////////////////////////////////////////////////////////////////
-
-
 	function readPlate($nr) {
+		
+		//Primero accedemos a la nube para realizar la decodificacion y lectura de la placa
 		$applicationId = 'LicensePlateReader';
 		$password = 'q1NBwTQz3KnMRHh/96qKIa2w ';
 		
@@ -53,7 +52,6 @@ class MobilesController extends AppController
 		$qry_str = "?taskid=$taskid";
 		
 		// Check task status in a loop until it is finished
-		// TODO: support states indicating error
 		do
 		{
 		  sleep(5);
@@ -80,93 +78,20 @@ class MobilesController extends AppController
 		curl_setopt($curlHandle, CURLOPT_SSL_VERIFYPEER, false);
 		$response = curl_exec($curlHandle);
 		curl_close($curlHandle);
-		//echo $response;
+		//encontramos el numero de placa en la respuesta
 		$valuepos = strpos($response , "utf-16");
 		$plate =  substr($response,$valuepos+8,7);
-		
-		$data = array(
-			'2477HEP' => array(
-				'Placa'=>'2477HEP',
-				'Poliza'=>'19941976',
-				'Clase'=>'JEEP',
-				'Tipo'=>'RAV 4',
-				'Marca'=>'TOYOTA',
-				'Modelo'=>'1999',
-				'Pais'=>'JAPON',
-				'Servicio'=>'PARTICULAR',
-				'Traccion'=>'(DOBLE)',
-				'Cilindrada'=>'1998',
-				'Color'=>'BLANCO',
-				'Puertas'=>'3',
-				'Radicatoria'=>'COCHABAMBA',
-				'Tipo'=>'REEMPLACADO',
-				'Deudas'=>'0',
-				'Gravamenes'=>'1',
-				'Observaciones'=>'1',	
-			),
-			'1146DLB' => array(
-				'Placa'=>'1146DLB',
-				'Poliza'=>'81640617',
-				'Clase'=>'VAGONETA',
-				'Tipo'=>'GRAND CHEROKEE',
-				'Marca'=>'JEEP',
-				'Modelo'=>'2008',
-				'Pais'=>'ESTADOS UNIDOS',
-				'Servicio'=>'PARTICULAR',
-				'Traccion'=>'4 X 4 (DOBLE)',
-				'Cilindrada'=>'4700',
-				'Color'=>'BLANCO',
-				'Puertas'=>'5',
-				'Radicatoria'=>'COCHABAMBA',
-				'Tipo'=>'REEMPLACADO',
-				'Deudas'=>'0',
-				'Gravamenes'=>'1',
-				'Observaciones'=>'0',	
-			),
-			'1188XNN' => array(
-				'Placa'=>'1188XNN',
-				'Poliza'=>'30021634',
-				'Clase'=>'JEEP',
-				'Tipo'=>'GRAND VITARA',
-				'Marca'=>'SUZUKI',
-				'Modelo'=>'2003',
-				'Pais'=>'JAPON',
-				'Servicio'=>'PARTICULAR',
-				'Traccion'=>'(DOBLE)',
-				'Cilindrada'=>'1590',
-				'Color'=>'	PLATA',
-				'Puertas'=>'3',
-				'Radicatoria'=>'COCHABAMBA',
-				'Tipo'=>'REEMPLACADO',
-				'Deudas'=>'0',
-				'Gravamenes'=>'0',
-				'Observaciones'=>'Placa en el almacén',	
-			),
-			'2906ILS' => array(
-				'Placa'=>'2906ILS',
-				'Poliza'=>'120433440',
-				'Clase'=>'VAGONETA',
-				'Tipo'=>'PATROL',
-				'Marca'=>'NISSAN',
-				'Modelo'=>'2012',
-				'Pais'=>'JAPON',
-				'Servicio'=>'OFICIAL',
-				'Traccion'=>'4 X 4 (DOBLE)',
-				'Cilindrada'=>'4759',
-				'Color'=>'PLATA',
-				'Puertas'=>'5',
-				'Radicatoria'=>'LA PAZ',
-				'Tipo'=>'REEMPLACADO',
-				'Deudas'=>'0',
-				'Gravamenes'=>'0',
-				'Observaciones'=>'',	
-			),
-		);
-		$this->set('plateData', $data[$plate]);
+		//llamamos al acceso a la base de la policia con la placa devuelta por el OCR en la nube
+		$this->set('plateData', $this->findPlate($plate));
 	}
 	
 	
 	function getPlateData($plate) {
+		//llamamos al acceso a la base de la policia
+		$this->set('plateData', $this->findPlate($plate));
+	}
+	private function findPlate($platenumber) {
+		//Aqui simulamos un acceso a la base de datos de la policia nacional o del RUAT, esta mini base estática es un extracto de la base disponible en la página: http://www.ruat.gob.bo/
 		$data = array(
 			'2477HEP' => array(
 				'Placa'=>'2477HEP',
@@ -245,7 +170,7 @@ class MobilesController extends AppController
 				'Observaciones'=>'',	
 			),
 		);
-		$this->set('plateData', $data[$plate]);
+		return $data[$platenumber];
 	}
 }
 ?>
