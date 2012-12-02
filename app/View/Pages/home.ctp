@@ -13,6 +13,7 @@ var apiKey = 'AIzaSyB1EjUV_8Lmq6YkAQ04jwRttfGft94bXX0';
 var crimeMarkers = [];
 var twitterMarkers = [];
 var userMarkers = [];
+var smsMarkers = [];
 
 var crimeLayer = null;
 var heatLayer = null;
@@ -76,11 +77,11 @@ function initialize() {
 
 	var createCrimeMarker = function(coordinate, crimeType, crimeInfo) {
 		
-		if(crimeType == 'HECHO DE TRANSITO')
-			iconImage = 'http://www.onsc.gob.bo/crimen/icons/crimescene.png';
-		else{
-			iconImage = 'http://www.onsc.gob.bo/crimen/icons/theft.png';
-		}
+		var crimeTypeId = crimeType;
+		
+		crimeTypeId = crimeTypeId.replace(/ /g, '_').replace(/-/g, '_').toLowerCase();
+		
+		iconImage = "<?php echo $this->Html->url('/img/', true); ?>map_" + crimeTypeId + ".png";
 
 		var marker = new google.maps.Marker({
 			map: map,
@@ -89,21 +90,17 @@ function initialize() {
 		});
 		
 		var infowindow = new google.maps.InfoWindow({
-			content: "<h4>Caso #" + crimeInfo.crime_id + "</h4>"
+			content: "<h4>Caso #" + crimeInfo.crime_id + "   <span class='label label-info'>" + crimeType + "</span></h4>"
 				+ "<p><strong>Hora / fecha:</strong> " + crimeInfo.crime_time + "</p>"
 				+ "<p><strong>Ciudad:</strong> " + crimeInfo.crime_city + "</p>"
 				+ "<p><strong>Lugar:</strong> " + crimeInfo.crime_location + "</p>"
-				+ "<p><strong>Desccripción:</strong></p>"
+				+ "<p><strong>Descripción:</strong></p>"
 				+ "<p>" + crimeInfo.crime_description + "</p>"
 		});
 		
 		google.maps.event.addListener(marker, 'click', function(event) {
 			infowindow.open(map, marker);
 		});
-		
-		var crimeTypeId = crimeType;
-		
-		crimeTypeId = crimeTypeId.replace(/ /g, '_').replace(/-/g, '_').toLowerCase();
 		
 		if (typeof crimeMarkers[crimeTypeId] == "undefined") {
 			crimeMarkers[crimeTypeId] = [];
@@ -177,8 +174,6 @@ function initialize() {
 					lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
 					long = (Math.random() * (68.15 - 68.1) + 68.1)*-1;
 					
-					
-					console.log(item);
 					if(typeof item.Location.lat !== 'undefined'){
 						lat = item.Location.lat;
 						long = item.Location.lon;
@@ -190,7 +185,7 @@ function initialize() {
 							description: item.Location.description,
 							date: item.Location.date
 						}
-						console.log(coordinate);
+						
 						createUserMarker(coordinate, Info);
 					}
 	
@@ -203,7 +198,7 @@ function initialize() {
 	
 	var createUserMarker = function(coordinate, info) {
 		
-		iconImage = "<?php echo $this->Html->url('/img/cake.icon.png', true); ?>";
+		iconImage = "<?php echo $this->Html->url('/img/map_user.png', true); ?>";
 		
 		var marker = new google.maps.Marker({
 			map: map,
@@ -227,6 +222,54 @@ function initialize() {
 		});
 		
 		userMarkers.push(marker);
+		
+	};
+	
+	function drawSmsMarkers(){
+		$.getJSON("<?php echo $this->Html->url('/',true)?>messages/get.json", 
+			function(jsondata) {
+				$.each(jsondata, function(i, item) {
+					lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
+					long = (Math.random() * (68.15 - 68.1) + 68.1)*-1;
+					
+					var coordinate = new google.maps.LatLng(lat, long);
+					
+					var Info = {
+						message: item.message
+					}
+					
+					createSmsMarker(coordinate, Info);
+	
+				});
+			}
+		);
+	}
+	
+	drawSmsMarkers();
+	
+	var createSmsMarker = function(coordinate, info) {
+		
+		iconImage = "<?php echo $this->Html->url('/img/map_sms.png', true); ?>";
+		
+		var marker = new google.maps.Marker({
+			map: map,
+			position: coordinate,
+			icon: new google.maps.MarkerImage(iconImage)
+		});
+		
+		
+		var infowindow = new google.maps.InfoWindow({
+			content:
+				' <div class="tweetText">'
+				+ "<p>" + info.message+ "</p>"
+				+ "</div>"
+		});
+		
+		google.maps.event.addListener(marker, 'click', function(event) {
+			infowindow.open(map, marker);
+		});
+		
+		smsMarkers.push(marker);
 		
 	};
 	
@@ -418,7 +461,6 @@ $(document).ready(function () {
 		areaTableName,
 		apiKey,
 		function(data) {
-			console.log(data);
 			if (populateSelect(parseJason(data), '#departamentos', '--- Todos ---')) {
 				$('#departamentos').trigger('change');
 			}
@@ -481,9 +523,9 @@ $(document).ready(function () {
 
 <div class="row-fluid">
 	<div class="span2">
-		<label><input type="checkbox" id="crime_layer" checked="checked">Incidentes oficiales</label>
-		<label><input type="checkbox" id="twitter_layer" checked="checked">Tweets</label>
-		<label><input type="checkbox" id="user_layer" checked="checked">Incidentes por usuarios </label>
+		<label><input type="checkbox" id="crime_layer" checked="checked"> Incidentes oficiales</label>
+		<label><input type="checkbox" id="twitter_layer" checked="checked"> Tweets</label>
+		<label><input type="checkbox" id="user_layer" checked="checked"> Incidentes por usuarios</label>
 		<label><input type="checkbox" id="area_layer" checked="checked"> Municipios</label>
 		<br />
 		<ul class="nav nav-tabs">
@@ -509,8 +551,6 @@ $(document).ready(function () {
 				<div id="municipios_legends" class="mapLegendContainer well"></div>
 			</div>
 		</div>
-		<hr>
-		<button class="btn btn-large btn-block btn-success" id="add_incidente" type="button">Agregar incidente</button>
 	</div><!--/span-->
 	<div class="span8" style="height: 100%;">
 		<div id="map_canvas"></div>

@@ -13,6 +13,8 @@
 	<body>
 		<header id="top">
 			<?php echo $this->Html->link($this->Html->image('segurimapas_logo.png', array('alt' => __('SeguriMapas'))), '/', array('id' => 'logo', 'escape' => false)); ?>
+			
+			<button class="btn btn-large btn-success" id="add_incidente" type="button">Agregar incidente</button>
 		</header>
 		<div class="container-fluid">
 			<?php //echo $this->element('top_nav'); ?>
