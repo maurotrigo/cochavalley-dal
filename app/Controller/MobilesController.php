@@ -1,8 +1,9 @@
 <?php
 App::import('Sanitize');
+App::uses('File', 'Utility');
 class MobilesController extends AppController
 {
-
+	
 	var $components = array('RequestHandler');
         
 //APPSEARCH2/////////////////////////////////////////////////////////////////
@@ -16,6 +17,7 @@ class MobilesController extends AppController
             $fileW->write(var_dump($_POST));
             $fileW->close();
 			echo $file;
+			var_dump($_POST);
 		//}
 	}
 	
