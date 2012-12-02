@@ -455,6 +455,14 @@ $(document).ready(function () {
 		}
 	});
 	
+	$("#sms_layer").click(function() {
+		if ($(this).is(":checked")) {
+			showOverlays(smsMarkers);
+		} else {
+			hideOverlays(smsMarkers);
+		}
+	});
+	
 	
 	queryTable(
 		"SELECT nom_dep FROM TABLE GROUP BY nom_dep",
@@ -526,7 +534,8 @@ $(document).ready(function () {
 		<label><input type="checkbox" id="crime_layer" checked="checked"> Incidentes oficiales</label>
 		<label><input type="checkbox" id="twitter_layer" checked="checked"> Tweets</label>
 		<label><input type="checkbox" id="user_layer" checked="checked"> Incidentes por usuarios</label>
-		<label><input type="checkbox" id="area_layer" checked="checked"> Municipios</label>
+		<label><input type="checkbox" id="sms_layer" checked="checked"> Incidentes desde SMS</label>
+		<label><input type="checkbox" id="area_layer" checked="checked"> Municipios</label>		
 		<br />
 		<ul class="nav nav-tabs">
 			<li class="active"><a href="#incidentes_pane" data-toggle="tab">Incidentes</a></li>
