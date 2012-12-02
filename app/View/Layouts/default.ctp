@@ -11,16 +11,19 @@
 		?>
 	</head>
 	<body>
-		<div class="container-fluid navbar-wrapper">
-			<?php echo $this->element('top_nav'); ?>
+		<header id="top">
+			<?php echo $this->Html->link($this->Html->image('segurimapas_logo.png', array('alt' => __('SeguriMapas'))), '/', array('id' => 'logo', 'escape' => false)); ?>
+		</header>
+		<div class="container-fluid">
+			<?php //echo $this->element('top_nav'); ?>
 			<div id="content">
 				<?php echo $this->Session->flash(); ?>
 				<?php echo $this->fetch('content'); ?>
 			</div>
-			<footer>
-			  <p>&copy; CochaValley 2012</p>
-			</footer>
 		</div>
+		<footer>
+		  <a href="http://cochavalley.com/" target="_new" id="brand">&copy; CochaValley 2012</a>
+		</footer>
 		<?php echo $this->element('sql_dump'); ?>
 		
 	</body>
