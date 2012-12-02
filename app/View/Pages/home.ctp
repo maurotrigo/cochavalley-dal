@@ -41,12 +41,39 @@ function initialize() {
 	} */
 	
 	
-	var query = "SELECT latitude, longitude, crime_type FROM " + crimeTableName;
-	 query = encodeURIComponent(query);
-	 var gvizQuery = new google.visualization.Query(
-		 'http://www.google.com/fusiontables/gvizdata?tq=' + query);
+	var query = "SELECT latitude, longitude, crime_type, crime_id, crime_date, crime_time, crime_dep, crime_city, crime_zone, crime_st, crime_desc FROM " + crimeTableName;
+	query = encodeURIComponent(query);
+	var gvizQuery = new google.visualization.Query('http://www.google.com/fusiontables/gvizdata?tq=' + query);
 
-	var createCrimeMarker = function(coordinate, crimeType) {
+	gvizQuery.send(function(response) {
+		var numRows = response.getDataTable().getNumberOfRows();
+		for (var i = 0; i < numRows; i++) {
+			var lat = response.getDataTable().getValue(i, 0);
+			var lng = response.getDataTable().getValue(i, 1);
+			var crimeType = response.getDataTable().getValue(i, 2);
+			var coordinate = new google.maps.LatLng(lat, lng);
+			
+			var crimeInfo = {
+				crime_id: response.getDataTable().getValue(i, 3),
+				crime_time: response.getDataTable().getValue(i, 4) + ', ' + response.getDataTable().getValue(i, 5),
+				crime_city: response.getDataTable().getValue(i, 7) + ', ' + response.getDataTable().getValue(i, 6),
+				crime_location: response.getDataTable().getValue(i, 9) + ', ' + response.getDataTable().getValue(i, 8),
+				crime_description: response.getDataTable().getValue(i, 10)
+			};
+			createCrimeMarker(coordinate, crimeType, crimeInfo);
+		}
+	  
+	
+		$(".crimeSubType").click(function() {
+			if ($(this).is(":checked")) {
+				showOverlays(crimeMarkers[$(this).attr("name")]);
+			} else {
+				hideOverlays(crimeMarkers[$(this).attr("name")]);
+			}
+		});
+	});	
+
+	var createCrimeMarker = function(coordinate, crimeType, crimeInfo) {
 		
 		if(crimeType == 'HECHO DE TRANSITO')
 			iconImage = 'http://www.onsc.gob.bo/crimen/icons/crimescene.png';
@@ -60,14 +87,21 @@ function initialize() {
 			icon: new google.maps.MarkerImage(iconImage)
 		});
 		
+		var infowindow = new google.maps.InfoWindow({
+			content: "<h4>Caso #" + crimeInfo.crime_id + "</h4>"
+				+ "<p><strong>Hora / fecha:</strong> " + crimeInfo.crime_time + "</p>"
+				+ "<p><strong>Ciudad:</strong> " + crimeInfo.crime_city + "</p>"
+				+ "<p><strong>Lugar:</strong> " + crimeInfo.crime_location + "</p>"
+				+ "<p><strong>Desccripción:</strong></p>"
+				+ "<p>" + crimeInfo.crime_description + "</p>"
+		});
 		
-		//google.maps.event.addListener(marker, 'click', function(event) {
-		//	infoWindow.setPosition(coordinate);
-		//	infoWindow.open(map);
-		//});
+		google.maps.event.addListener(marker, 'click', function(event) {
+			infowindow.open(map, marker);
+		});
 		
-		var crimeTypeId = crimeType;		
-		//crimeTypeId.split(' ').join(' ');
+		var crimeTypeId = crimeType;
+		
 		crimeTypeId = crimeTypeId.replace(/ /g, '_').replace(/-/g, '_').toLowerCase();
 		
 		if (typeof crimeMarkers[crimeTypeId] == "undefined") {
@@ -79,27 +113,6 @@ function initialize() {
 			$("#crime_sub_layers").append('<li id="sub_' + crimeTypeId + '"><label><input type="checkbox" class="crimeSubType"  name="' + crimeTypeId + '" checked="checked"> ' + crimeType.charAt(0).toUpperCase() + crimeType.slice(1).toLowerCase() + '</label></li>');
 		}		
 	};
-
-	gvizQuery.send(function(response) {
-		var numRows = response.getDataTable().getNumberOfRows();
-		for (var i = 0; i < numRows; i++) {
-			var lat = response.getDataTable().getValue(i, 0);
-			var lng = response.getDataTable().getValue(i, 1);
-			var crime_type = response.getDataTable().getValue(i, 2);;
-			var coordinate = new google.maps.LatLng(lat, lng);
-			
-			createCrimeMarker(coordinate, crime_type);
-		}
-	  
-	
-		$(".crimeSubType").click(function() {
-			if ($(this).is(":checked")) {
-				showOverlays(crimeMarkers[$(this).attr("name")]);
-			} else {
-				hideOverlays(crimeMarkers[$(this).attr("name")]);
-			}
-		});
-	});	
 	
 	areaLayer = new google.maps.FusionTablesLayer({
 		query: {
@@ -243,6 +256,16 @@ $(document).ready(function () {
 		}
 	});
 	
+	$('#municipios_params select:first').change(function() {
+		var selectedValue = $(this).find('option:selected').val();
+		
+		if (selectedValue != '') {
+			applyStyle(map, areaLayer, selectedValue);
+			$(".mapLegend").hide();
+			$("#legend_" + selectedValue).show();
+		}
+	});
+	
 }); //MT: end $(document).ready()
 </script>
 
@@ -262,6 +285,16 @@ $(document).ready(function () {
 			<div class="tab-pane" id="indicadores_pane">
 				<label for="map_departamentos">Departamentos:</label>
 				<select name="map_departamentos" class="input-medium" id="departamentos"></select>
+				<div id="municipios_params">
+					<label for="map_municipios_params">Municipios:</label>
+					<select name="map_municipios_params" class="input-medium">
+						<option value="poblacion" selected="selected">Población</option>
+						<option value="ESP">Esperanza de vida</option>
+						<option value="TANA">Tasa de analfabetismo</option>
+						<option value="CPC">Consumo per cápita</option>
+					</select>					
+				</div>
+				<div id="municipios_legends" class="mapLegendContainer well"></div>
 			</div>
 		</div>
 	</div><!--/span-->
@@ -305,7 +338,7 @@ var layerStyles = {
 			'color': '#FF9900'
 		}
 	],
-	'cob_ap': [
+	'ESP': [
 		{
 			'min': 0,
 			'max': 20,
@@ -332,7 +365,7 @@ var layerStyles = {
 			'color': '#0099FF'
 		}
 	],
-	'cob_san': [
+	'TANA': [
 		{
 			'min': 0,
 			'max': 20,
@@ -359,7 +392,52 @@ var layerStyles = {
 			'color': '#00CC00'
 		}
 	],
+	'CPC': [
+		{
+			'min': 0,
+			'max': 400,
+			'color': '#E5D4DD'
+		},
+		{
+			'min': 400,
+			'max': 800,
+			'color': '#CCAABB'
+		},
+		{
+			'min': 800,
+			'max': 1200,
+			'color': '#B27F99'
+		},
+		{
+			'min': 1200,
+			'max': 1600,
+			'color': '#995577'
+		},
+		{
+			'min': 1600,
+			'max': 2000,
+			'color': '#7F2A55'
+		},
+		{
+			'min': 2000,
+			'max': 2400,
+			'color': '#660033'
+		}
+	],
 }
+
+for (var i in layerStyles) {
+	var listItems = '<ul id="legend_' + i + '" class="mapLegend noStyle">';
+	listItems += '<li class="legendTitle">' + i + '</li>';
+	for(var style in layerStyles[i]) {
+		listItems += '<li><span class="legendColor" style="background-color: ' + layerStyles[i][style].color + ';"></span> ' + layerStyles[i][style].min + ' - ' + layerStyles[i][style].max + '</li>';
+	}
+	listItems += '</ul>';
+	$("#municipios_legends").append(listItems);
+}
+
+$(".mapLegend").hide();
+$("#legend_" + $('#municipios_params select:first').find('option:selected').val()).show();
 
 function applyStyle(map, layer, column) {
 	var columnStyle = layerStyles[column];
