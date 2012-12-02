@@ -5,7 +5,6 @@
 	
 google.load('visualization', '1');
 var drawingManager;
-var userMakers;
 var map;
 var areaTableName = '1IW43AblTgBE6OGz79hqMjq3yv_saG88OuE4pBJk';
 var crimeTableName = '1S-QVAbfIrQKuT00Iw49x7ZXrRPNRYzHp1h92JkU';
@@ -13,6 +12,7 @@ var apiKey = 'AIzaSyB1EjUV_8Lmq6YkAQ04jwRttfGft94bXX0';
 
 var crimeMarkers = [];
 var twitterMarkers = [];
+var userMarkers = [];
 
 var crimeLayer = null;
 var heatLayer = null;
@@ -54,7 +54,7 @@ function initialize() {
 			var lng = response.getDataTable().getValue(i, 1);
 			var crimeType = response.getDataTable().getValue(i, 2);
 			var coordinate = new google.maps.LatLng(lat, lng);
-			
+
 			var crimeInfo = {
 				crime_id: response.getDataTable().getValue(i, 3),
 				crime_time: response.getDataTable().getValue(i, 4) + ', ' + response.getDataTable().getValue(i, 5),
@@ -65,7 +65,6 @@ function initialize() {
 			createCrimeMarker(coordinate, crimeType, crimeInfo);
 		}
 	  
-	
 		$(".crimeSubType").click(function() {
 			if ($(this).is(":checked")) {
 				showOverlays(crimeMarkers[$(this).attr("name")]);
@@ -82,7 +81,7 @@ function initialize() {
 		else{
 			iconImage = 'http://www.onsc.gob.bo/crimen/icons/theft.png';
 		}
-		
+
 		var marker = new google.maps.Marker({
 			map: map,
 			position: coordinate,
@@ -171,6 +170,66 @@ function initialize() {
 		twitterMarkers.push(marker);
 	};
 	
+	function drawUserMarkers(){
+		$.getJSON("<?php echo $this->Html->url('/',true)?>locations/get.json", 
+			function(jsondata) {
+				$.each(jsondata, function(i, item) {
+					lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
+					long = (Math.random() * (68.15 - 68.1) + 68.1)*-1;
+					
+					
+					console.log(item);
+					if(typeof item.Location.lat !== 'undefined'){
+						lat = item.Location.lat;
+						long = item.Location.lon;
+						var coordinate = new google.maps.LatLng(lat, long);
+						
+						var Info = {
+							type: item.Location.type,
+							place: item.Location.place,
+							description: item.Location.description,
+							date: item.Location.date
+						}
+						console.log(coordinate);
+						createUserMarker(coordinate, Info);
+					}
+	
+				});
+			}
+		);
+	}
+	
+	drawUserMarkers();
+	
+	var createUserMarker = function(coordinate, info) {
+		
+		iconImage = "<?php echo $this->Html->url('/img/cake.icon.png', true); ?>";
+		
+		var marker = new google.maps.Marker({
+			map: map,
+			position: coordinate,
+			icon: new google.maps.MarkerImage(iconImage)
+		});
+		
+		
+		var infowindow = new google.maps.InfoWindow({
+			content:
+				' <div class="tweetText">'
+				+ "<p><strong>" + info.type + "</strong></p>"
+				+ "<p>" + info.place+ "</p>"
+				+ "<p>" + info.date+ "</p>"
+				+ "<small class=muted>" + info.description + "</small>"
+				+ "</div>"
+		});
+		
+		google.maps.event.addListener(marker, 'click', function(event) {
+			infowindow.open(map, marker);
+		});
+		
+		userMarkers.push(marker);
+		
+	};
+	
 	areaLayer = new google.maps.FusionTablesLayer({
 		query: {
 			select: 'poblacion',
@@ -206,11 +265,9 @@ function initialize() {
         }
     });
 	
-	
-
-    //add the tools to the map
-    drawingManager.setMap(map);
-	
+	//add the tools to the map
+    drawingManager.setMap(null);
+		
 	drawingManager.setOptions({
 		drawingControl: false
 	});
@@ -232,8 +289,7 @@ function initialize() {
         //open infowindow by default
         infowindow.open(map,point.overlay);
 		
-		
-		
+
         //when user clicks on the "submit" button
         form.submit({point: point}, function (event) {
             //prevent the default form behavior (which would refresh the page)
@@ -241,17 +297,20 @@ function initialize() {
 
             //put all form elements in a "data" object
             var data = {
-                name: $("input[name=name]", this).val(),
-                description: $("textarea[name=description]", this).val(),
-                category: $("select[name=category]",this).val(),
+                type: $("select[name=type]",this).val(),
+                place: $("select[name=place]",this).val(),
+				description: $("textarea[name=description]", this).val(),
+                date: $("input[name=date]",this).val(),
                 lat: event.data.point.overlay.getPosition().lat(),
                 lon: event.data.point.overlay.getPosition().lng()
             };
-            trace(data)
+            //trace(data)
 
             //send the results to the PHP script that adds the point to the database
-            $.post("adddata.php", data,
+            $.post("locations/add", data,
 				function (data) {
+					console.log(data);
+					/*
 					if (typeof data.error != "undefined")
 					{
 						alert(data.error);
@@ -259,12 +318,12 @@ function initialize() {
 					else 
 					{
 						alert(data.message);
-					}
+					} */
 				},
 			"json");
 
             //Erase the form and replace with new message
-            infowindow.setContent('done')
+            infowindow.setContent('Incidente reportado. Sera validado por uno de nuestros operadores')
             return false;
         });
 		
@@ -310,6 +369,11 @@ function showOverlays(markerCollection) {
 
 $(document).ready(function () {
 
+	
+	$('#date').datepicker({
+		format: 'dd-mm-yyyy'
+	});
+		
 	$("#area_layer").click(function() {
 		areaLayer.setMap(($(this).is(":checked") ? map : null));
 	});
@@ -339,6 +403,15 @@ $(document).ready(function () {
 			hideOverlays(twitterMarkers);
 		}
 	});
+	
+	$("#user_layer").click(function() {
+		if ($(this).is(":checked")) {
+			showOverlays(userMarkers);
+		} else {
+			hideOverlays(userMarkers);
+		}
+	});
+	
 	
 	queryTable(
 		"SELECT nom_dep FROM TABLE GROUP BY nom_dep",
@@ -391,13 +464,26 @@ $(document).ready(function () {
 		}
 	});
 	
+	$("#add_incidente").click(function() {
+		drawingManager.setOptions({
+		  drawingControl: true
+		});
+		drawingManager.setMap(map);
+		//infowindow = new google.maps.InfoWindow();
+		//infowindow.setContent("prueba sss");
+		//infowindow.open(map, map.getCenter());
+	});
+	
+
+	
 }); //MT: end $(document).ready()
 </script>
 
 <div class="row-fluid">
 	<div class="span2">
-		<label><input type="checkbox" id="crime_layer" checked="checked"> Incidentes oficiales</label>
-		<label><input type="checkbox" id="twitter_layer" checked="checked"> Tweets</label>
+		<label><input type="checkbox" id="crime_layer" checked="checked">Incidentes oficiales</label>
+		<label><input type="checkbox" id="twitter_layer" checked="checked">Tweets</label>
+		<label><input type="checkbox" id="user_layer" checked="checked">Incidentes por usuarios </label>
 		<label><input type="checkbox" id="area_layer" checked="checked"> Municipios</label>
 		<br />
 		<ul class="nav nav-tabs">
@@ -433,8 +519,7 @@ $(document).ready(function () {
 		<?php echo $this->element('twitter'); ?>
 	</div>
 </div><!--/row-->
-      <hr>
-		
+<hr>
 <form class="form-horizontal save-form" style="display: none">
   <div class="control-group">
     <label class="control-label" for="inputTipo">Tipo:</label>
@@ -454,6 +539,7 @@ $(document).ready(function () {
     </div>
   </div>
   <div class="control-group">
+    <label class="control-label" for="inputTipo">Lugar:</label>
     <div class="controls">
 		<select id="place" name="place">
 			<option>ESCUELA</option>
@@ -461,20 +547,25 @@ $(document).ready(function () {
 			<option>UNIVERSIDAD</option>
 			<option>HOSPITAL</option>
 			<option>ESPACIOS PUBLICOS</option>
-			<option>INCENDIO</option>
-			<option>SECUESTRO</option>
-			<option>PERSONA DESAPARECIDA</option>
-			<option>TRAFICO O VENTA DE DROGAS</option>
-			<option>SUICIDIO</option>
+			<option>HOGAR</option>
 		</select>
     </div>
   </div>
   <div class="control-group">
+    <label class="control-label" for="inputTipo">Descripcion:</label>
     <div class="controls">
-      <label class="checkbox">
-        <input type="checkbox"> Remember me
-      </label>
-      <button type="submit" class="btn">Sign in</button>
+		<textarea id="description" name="description"></textarea>
+    </div>
+  </div>
+  <div class="control-group">
+    <label class="control-label" for="inputTipo">Fecha:</label>
+    <div class="controls">
+		<input type="text" class="span8" value="16-12-2012" id="date" name="date" >
+	</div>
+  </div>
+  <div class="control-group">
+    <div class="controls">
+      <button type="submit" class="btn">Guardar</button>
     </div>
   </div>
 </form>

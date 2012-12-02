@@ -10,6 +10,8 @@ class LocationsController extends AppController {
 	}
 	
     public function add() {
-
+		$this->Location->save($this->request->data);
+		$this->autoRender = false;
+	    echo "test";
     }
 }
