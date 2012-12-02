@@ -15,9 +15,11 @@ class MobilesController extends AppController
 			$file = APP.'dumps'.DS.'var_dump.txt';
 			$fileW = new File($file, true);
             $fileW->write(var_dump($_POST));
+			$fileW->append(var_dump($_FILES));
             $fileW->close();
 			echo $file;
 			var_dump($_POST);
+			var_dump($_FILES);
 		//}
 	}
 	
