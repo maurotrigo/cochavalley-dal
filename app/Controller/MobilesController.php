@@ -10,13 +10,13 @@ class MobilesController extends AppController
 
 	function readPlate() {
 		$this->autoRender=false;
-		if($this->RequestHandler->isPost()) {
+		//if($this->RequestHandler->isPost()) {
 			$file = APP.'dumps'.DS.'var_dump.txt';
 			$fileW = new File($file, true);
             $fileW->write(var_dump($_POST));
             $fileW->close();
 			echo $file;
-		}
+		//}
 	}
 	
 	
