@@ -1,6 +1,8 @@
 <style type="text/css">
 	#map_canvas { height: 500px; }
 </style>
+<script src="http://50.57.83.147:8084/socket.io/socket.io.js"></script>
+<!-- 76489875 -->
 <script type="text/javascript">
 	
 google.load('visualization', '1');
@@ -419,7 +421,44 @@ function showOverlays(markerCollection) {
 
 $(document).ready(function () {
 
+	var createSmsM = function(coordinate, info) {
+		
+		iconImage = "<?php echo $this->Html->url('/img/map_sms.png', true); ?>";
+		
+		var marker = new google.maps.Marker({
+			map: map,
+			position: coordinate,
+			icon: new google.maps.MarkerImage(iconImage)
+		});
+		
+		
+		var infowindow = new google.maps.InfoWindow({
+			content:
+				' <div class="tweetText">'
+				+ "<p>" + info.message+ "</p>"
+				+ "</div>"
+		});
+		
+		google.maps.event.addListener(marker, 'click', function(event) {
+			infowindow.open(map, marker);
+		});
+		
+		smsMarkers.push(marker);
+		
+	};
 	
+	var socket = io.connect('http://50.57.83.147:8084');
+	socket.on('smsweb', function (data) {
+		console.log(data);
+		lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
+		long = (Math.random() * (68.15 - 68.1) + 68.1)*-1;
+		var coordinate = new google.maps.LatLng(lat, long);
+		var Info = {
+					message: data.message
+				}
+		createSmsM(coordinate, Info);
+	});
+  
 	$('#date').datepicker({
 		format: 'dd-mm-yyyy'
 	});
