@@ -39,6 +39,7 @@
 
     
     Router::mapResources('locations');
+    Router::mapResources('messages');
     Router::parseExtensions('json');
     
 /**
