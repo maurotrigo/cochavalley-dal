@@ -229,16 +229,23 @@ function initialize() {
 		$.getJSON("<?php echo $this->Html->url('/',true)?>messages/get.json", 
 			function(jsondata) {
 				$.each(jsondata, function(i, item) {
-					lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
-					long = (Math.random() * (68.15 - 68.1) + 68.1)*-1;
 					
-					var coordinate = new google.maps.LatLng(lat, long);
 					
-					var Info = {
-						message: item.message
+					console.log(item);
+					
+					if(typeof item.Message.message!='undefined'){
+						
+						lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
+						long = (Math.random() * (68.15 - 68.1) + 68.1)*-1;
+						
+						var coordinate = new google.maps.LatLng(lat, long);
+						
+						var Info = {
+							message: item.Message.message
+						}
+						
+						createSmsMarker(coordinate, Info);
 					}
-					
-					createSmsMarker(coordinate, Info);
 	
 				});
 			}
