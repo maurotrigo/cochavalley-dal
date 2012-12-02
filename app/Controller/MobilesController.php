@@ -17,7 +17,6 @@ class MobilesController extends AppController
 	
 	
 	function getPlateData($plate) {
-		$this->view = 'Json';
 		$data = array(
 			'2477HEP' => array(
 				'Placa'=>'2477HEP',
