@@ -2,4 +2,10 @@
 
 ul.noStyle { margin-left: 0; padding-left: 0; list-style: none; }
 
+.mapLegend { margin: 0; }
+	.legendTitle { margin-bottom: 16px; font-weight: bold; }
+	.legendColor { display: inline-block; width: 10px; height: 10px; }
+
 #map_canvas { border-radius: 4px; }
+
+.tweetText { float: right; padding-left: 16px; }

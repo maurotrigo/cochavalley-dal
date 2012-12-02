@@ -29,14 +29,18 @@ function checkQuery(query, table) {
 }
 
 function parseJason(data) {
-	if (data != "") {
-		try {
-			return $.parseJSON(data);
-		} catch (e) {
+	if (typeof data != 'object') {	
+		if (data != "") {
+			try {
+				return $.parseJSON(data);
+			} catch (e) {
+				return false;
+			}
+		} else {
 			return false;
-		}
+		}	
 	} else {
-		return false;
+		return data
 	}
 }
 

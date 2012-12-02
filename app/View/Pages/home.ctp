@@ -12,6 +12,7 @@ var crimeTableName = '1S-QVAbfIrQKuT00Iw49x7ZXrRPNRYzHp1h92JkU';
 var apiKey = 'AIzaSyB1EjUV_8Lmq6YkAQ04jwRttfGft94bXX0';
 
 var crimeMarkers = [];
+var twitterMarkers = [];
 
 var crimeLayer = null;
 var heatLayer = null;
@@ -21,7 +22,7 @@ function initialize() {
 	var lapaz = new google.maps.LatLng(-16.46463897, -68.14933062);
 	var mapOptions = {
 		center: lapaz,
-		zoom: 6,
+		zoom: 11,
 		mapTypeId: google.maps.MapTypeId.ROADMAP
 	};
 	map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
@@ -42,12 +43,39 @@ function initialize() {
 	} */
 	
 	
-	var query = "SELECT latitude, longitude, crime_type FROM " + crimeTableName;
-	 query = encodeURIComponent(query);
-	 var gvizQuery = new google.visualization.Query(
-		 'http://www.google.com/fusiontables/gvizdata?tq=' + query);
+	var query = "SELECT latitude, longitude, crime_type, crime_id, crime_date, crime_time, crime_dep, crime_city, crime_zone, crime_st, crime_desc FROM " + crimeTableName;
+	query = encodeURIComponent(query);
+	var gvizQuery = new google.visualization.Query('http://www.google.com/fusiontables/gvizdata?tq=' + query);
 
-	var createCrimeMarker = function(coordinate, crimeType) {
+	gvizQuery.send(function(response) {
+		var numRows = response.getDataTable().getNumberOfRows();
+		for (var i = 0; i < numRows; i++) {
+			var lat = response.getDataTable().getValue(i, 0);
+			var lng = response.getDataTable().getValue(i, 1);
+			var crimeType = response.getDataTable().getValue(i, 2);
+			var coordinate = new google.maps.LatLng(lat, lng);
+			
+			var crimeInfo = {
+				crime_id: response.getDataTable().getValue(i, 3),
+				crime_time: response.getDataTable().getValue(i, 4) + ', ' + response.getDataTable().getValue(i, 5),
+				crime_city: response.getDataTable().getValue(i, 7) + ', ' + response.getDataTable().getValue(i, 6),
+				crime_location: response.getDataTable().getValue(i, 9) + ', ' + response.getDataTable().getValue(i, 8),
+				crime_description: response.getDataTable().getValue(i, 10)
+			};
+			createCrimeMarker(coordinate, crimeType, crimeInfo);
+		}
+	  
+	
+		$(".crimeSubType").click(function() {
+			if ($(this).is(":checked")) {
+				showOverlays(crimeMarkers[$(this).attr("name")]);
+			} else {
+				hideOverlays(crimeMarkers[$(this).attr("name")]);
+			}
+		});
+	});	
+
+	var createCrimeMarker = function(coordinate, crimeType, crimeInfo) {
 		
 		if(crimeType == 'HECHO DE TRANSITO')
 			iconImage = 'http://www.onsc.gob.bo/crimen/icons/crimescene.png';
@@ -61,14 +89,21 @@ function initialize() {
 			icon: new google.maps.MarkerImage(iconImage)
 		});
 		
+		var infowindow = new google.maps.InfoWindow({
+			content: "<h4>Caso #" + crimeInfo.crime_id + "</h4>"
+				+ "<p><strong>Hora / fecha:</strong> " + crimeInfo.crime_time + "</p>"
+				+ "<p><strong>Ciudad:</strong> " + crimeInfo.crime_city + "</p>"
+				+ "<p><strong>Lugar:</strong> " + crimeInfo.crime_location + "</p>"
+				+ "<p><strong>Desccripción:</strong></p>"
+				+ "<p>" + crimeInfo.crime_description + "</p>"
+		});
 		
-		//google.maps.event.addListener(marker, 'click', function(event) {
-		//	infoWindow.setPosition(coordinate);
-		//	infoWindow.open(map);
-		//});
+		google.maps.event.addListener(marker, 'click', function(event) {
+			infowindow.open(map, marker);
+		});
 		
-		var crimeTypeId = crimeType;		
-		//crimeTypeId.split(' ').join(' ');
+		var crimeTypeId = crimeType;
+		
 		crimeTypeId = crimeTypeId.replace(/ /g, '_').replace(/-/g, '_').toLowerCase();
 		
 		if (typeof crimeMarkers[crimeTypeId] == "undefined") {
@@ -81,26 +116,60 @@ function initialize() {
 		}		
 	};
 
-	gvizQuery.send(function(response) {
-		var numRows = response.getDataTable().getNumberOfRows();
-		for (var i = 0; i < numRows; i++) {
-			var lat = response.getDataTable().getValue(i, 0);
-			var lng = response.getDataTable().getValue(i, 1);
-			var crime_type = response.getDataTable().getValue(i, 2);;
-			var coordinate = new google.maps.LatLng(lat, lng);
-			
-			createCrimeMarker(coordinate, crime_type);
+	 
+	$.getJSON("http://50.57.83.147:8083/tweets/?callback=?", 
+		function(jsondata) {
+			$.each(jsondata.results, function(i, item) {
+				lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
+				long = (Math.random() * (68.15 - 68.1) + 68.1)*-1;
+				
+				if(item.geo != null){
+					if(item.geo.coordinates[0]!=0.000000){
+						lat = item.geo.coordinates[0];
+						long = item.geo.coordinates[1];
+					}
+				}
+				
+				var coordinate = new google.maps.LatLng(lat, long);
+				
+				var tweetInfo = {
+					text: item.text,
+					from_user: item.from_user,
+					created_at: item.created_at,
+					profile_image_url: item.profile_image_url
+				}
+				
+				createTwitterMarker(coordinate, tweetInfo);
+			});
 		}
-	  
+	);
 	
-		$(".crimeSubType").click(function() {
-			if ($(this).is(":checked")) {
-				showOverlays(crimeMarkers[$(this).attr("name")]);
-			} else {
-				hideOverlays(crimeMarkers[$(this).attr("name")]);
-			}
+	var createTwitterMarker = function(coordinate, tweetInfo) {
+		
+		iconImage = "<?php echo $this->Html->url('/img/map_twitter.png', true); ?>";
+		
+		var marker = new google.maps.Marker({
+			map: map,
+			position: coordinate,
+			icon: new google.maps.MarkerImage(iconImage)
 		});
-	});	
+		
+		var infowindow = new google.maps.InfoWindow({
+			content:
+				'<img src="' + tweetInfo.profile_image_url + '" class="pull-left img-rounded">'
+				+ '<div class="tweetText">'
+				+ "<p><strong>" + tweetInfo.from_user + "</strong></p>"
+				+ "<p>" + tweetInfo.text+ "</p>"
+				+ "<small class=muted>" + tweetInfo.created_at + "</small>"
+				+ "</div>"
+		});
+		
+		google.maps.event.addListener(marker, 'click', function(event) {
+			infowindow.open(map, marker);
+		});
+		
+		twitterMarkers.push(marker);
+	};
 	
 	areaLayer = new google.maps.FusionTablesLayer({
 		query: {
@@ -109,41 +178,18 @@ function initialize() {
 		}
 	});
 	
+	google.maps.event.addListener(areaLayer, 'click', function(event) {
+		event.infoWindowHtml =
+			"<h5>" + event.row['nom_mun'].value + ', ' + event.row['nom_dep'].value + "</h5>"
+			+ "<p><strong>Población:</strong> " + event.row['poblacion'].value + "</p>"
+			+ "<p><strong>Esperanza de vida:</strong> " + event.row['ESP'].value + " años</p>"
+			+ "<p><strong>Tasa de analfabetismo:</strong> " + event.row['TANA'].value + "%</p>"
+			+ "<p><strong>Consumo per cápita:</strong> " + event.row['CPC'].value + "</p>"
+			+ "<p><strong>Escolaridad:</strong> " + event.row['ESC'].value + "</p>"
+		;
+	})
+	
 	areaLayer.setMap(map);
-	
-	
-	var createTwitterMarker = function(coordinate) {
-	   
-		image = 'http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/en/devnet/enterprise-platform/twitter/twitter_small_1307050985_2229.png.adimg.mw.58.png';
-
-		var marker = new google.maps.Marker({
-		  map: map,
-		  position: coordinate,
-		  icon: new google.maps.MarkerImage(image)
-		});
-		google.maps.event.addListener(marker, 'click', function(event) {
-		  infoWindow.setPosition(coordinate);
-		  infoWindow.open(map);
-		});
-	};
-
-	$.getJSON("http://50.57.83.147:8083/tweets/?callback=?", 
-		function(jsondata){
-			$.each(jsondata.results, function(i,item){
-				lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
-				long = (Math.random() * (68.15 - 68.1) + 68.1)*-1;
-				console.log(item.id_str);
-				if(item.geo!=null){
-					if(item.geo.coordinates[0]!=0.000000){
-						lat = item.geo.coordinates[0];
-						long = item.geo.coordinates[1];
-					}
-				}
-				var coordinate = new google.maps.LatLng(lat, long);
-				createTwitterMarker(coordinate);
-			});
-		}
-	);
 
 	//add the drawing tool that allows users to draw points on the map
     drawingManager = new google.maps.drawing.DrawingManager({
@@ -286,11 +332,20 @@ $(document).ready(function () {
 		}
 	});
 	
+	$("#twitter_layer").click(function() {
+		if ($(this).is(":checked")) {
+			showOverlays(twitterMarkers);
+		} else {
+			hideOverlays(twitterMarkers);
+		}
+	});
+	
 	queryTable(
 		"SELECT nom_dep FROM TABLE GROUP BY nom_dep",
 		areaTableName,
 		apiKey,
 		function(data) {
+			console.log(data);
 			if (populateSelect(parseJason(data), '#departamentos', '--- Todos ---')) {
 				$('#departamentos').trigger('change');
 			}
@@ -325,24 +380,25 @@ $(document).ready(function () {
 		}
 	});
 
-
-
-	$("#add_incidente").click(function() {
-		drawingManager.setOptions({
-		  drawingControl: true
-		});
-		//infowindow = new google.maps.InfoWindow();
-		//infowindow.setContent("prueba sss");
-		//infowindow.open(map, map.getCenter());
+	
+	$('#municipios_params select:first').change(function() {
+		var selectedValue = $(this).find('option:selected').val();
 		
+		if (selectedValue != '') {
+			applyStyle(map, areaLayer, selectedValue);
+			$(".mapLegend").hide();
+			$("#legend_" + selectedValue).show();
+		}
 	});
+	
 }); //MT: end $(document).ready()
 </script>
 
 <div class="row-fluid">
 	<div class="span2">
-		<label for="crime_layer"><input type="checkbox" id="crime_layer" checked="checked"> Incidentes</label>
-		<label for="area_layer"><input type="checkbox" id="area_layer" checked="checked"> Municipios</label>
+		<label><input type="checkbox" id="crime_layer" checked="checked"> Incidentes oficiales</label>
+		<label><input type="checkbox" id="twitter_layer" checked="checked"> Tweets</label>
+		<label><input type="checkbox" id="area_layer" checked="checked"> Municipios</label>
 		<br />
 		<ul class="nav nav-tabs">
 			<li class="active"><a href="#incidentes_pane" data-toggle="tab">Incidentes</a></li>
@@ -355,6 +411,16 @@ $(document).ready(function () {
 			<div class="tab-pane" id="indicadores_pane">
 				<label for="map_departamentos">Departamentos:</label>
 				<select name="map_departamentos" class="input-medium" id="departamentos"></select>
+				<div id="municipios_params">
+					<label for="map_municipios_params">Municipios:</label>
+					<select name="map_municipios_params" class="input-medium">
+						<option value="poblacion" selected="selected">Población</option>
+						<option value="ESP">Esperanza de vida</option>
+						<option value="TANA">Tasa de analfabetismo</option>
+						<option value="CPC">Consumo per cápita</option>
+					</select>					
+				</div>
+				<div id="municipios_legends" class="mapLegendContainer well"></div>
 			</div>
 		</div>
 		<hr>
@@ -445,7 +511,7 @@ var layerStyles = {
 			'color': '#FF9900'
 		}
 	],
-	'cob_ap': [
+	'ESP': [
 		{
 			'min': 0,
 			'max': 20,
@@ -472,7 +538,7 @@ var layerStyles = {
 			'color': '#0099FF'
 		}
 	],
-	'cob_san': [
+	'TANA': [
 		{
 			'min': 0,
 			'max': 20,
@@ -499,7 +565,52 @@ var layerStyles = {
 			'color': '#00CC00'
 		}
 	],
+	'CPC': [
+		{
+			'min': 0,
+			'max': 400,
+			'color': '#E5D4DD'
+		},
+		{
+			'min': 400,
+			'max': 800,
+			'color': '#CCAABB'
+		},
+		{
+			'min': 800,
+			'max': 1200,
+			'color': '#B27F99'
+		},
+		{
+			'min': 1200,
+			'max': 1600,
+			'color': '#995577'
+		},
+		{
+			'min': 1600,
+			'max': 2000,
+			'color': '#7F2A55'
+		},
+		{
+			'min': 2000,
+			'max': 2400,
+			'color': '#660033'
+		}
+	],
 }
+
+for (var i in layerStyles) {
+	var listItems = '<ul id="legend_' + i + '" class="mapLegend noStyle">';
+	listItems += '<li class="legendTitle">' + i + '</li>';
+	for(var style in layerStyles[i]) {
+		listItems += '<li><span class="legendColor" style="background-color: ' + layerStyles[i][style].color + ';"></span> ' + layerStyles[i][style].min + ' - ' + layerStyles[i][style].max + '</li>';
+	}
+	listItems += '</ul>';
+	$("#municipios_legends").append(listItems);
+}
+
+$(".mapLegend").hide();
+$("#legend_" + $('#municipios_params select:first').find('option:selected').val()).show();
 
 function applyStyle(map, layer, column) {
 	var columnStyle = layerStyles[column];
