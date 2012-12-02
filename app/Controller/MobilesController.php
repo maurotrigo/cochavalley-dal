@@ -110,7 +110,7 @@ class MobilesController extends AppController
 				'Tipo'=>'REEMPLACADO',
 				'Deudas'=>'0',
 				'Gravamenes'=>'1',
-				'Observaciones'=>'1',	
+				'Observaciones'=>'Robado, en captura',	
 			),
 			'1146DLB' => array(
 				'Placa'=>'1146DLB',
@@ -174,7 +174,7 @@ class MobilesController extends AppController
 		{
 			return $data[$platenumber];
 		}
-		esle
+		else
 		{
 			return array();
 		}
