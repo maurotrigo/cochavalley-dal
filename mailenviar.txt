@@ -1,0 +1,56 @@
+Nombre del equipo:
+Cocha Valley
+
+Integrantes:
+Alvaro Molina
+Mauro Trigo
+Rene Polo
+Sergio Torrico
+
+
+Datos utilizados:
+
+http://maps.worldbank.org/
+
+Estos dos ultimos estamos procesando:
+http://www.onsc.gob.bo/crimen/
+http://www.mmaya.gob.bo/econo/index.htm
+
+
+Problema que soluciona:
+    Seguridad ciudadana para la poblacion en general
+    Validacion de automoviles sospechosos (taxis y otros) para evitar secuestros   
+    Recopilicacion de datos de seguridad para los creadores de politicas
+
+
+Solucion planteada:
+
+Una aplicacion movil y web con las siguientes funcionalidades.
+    Reconocimiento de placas para validacion si un auto es el modelo registrado o si es robado
+    Mapa de crimenes y eventos que afecten a la seguridad
+    Posibilidad de subir estos datos mediante:
+        La aplicacion movil
+        La aplicacion web
+        Twitter
+        SMS
+
+
+Screen Cast: no hay todavia
+
+
+Link a la aplicacion: No hay todavia
+
+Como contactar al equipo:
+
+Mails:
+    Sergio Torrico  coolits@gmail.com
+    mauro.trigo@gmail.com
+    alvaromolinac@gmail.com
+    renejpolo@me.com
+
+Telefono:
+65456747
+
+Github:
+https://github.com/maurotrigo/cochavalley-dal
+https://github.com/alvaromolina/nodehelpersdal

@@ -4,7 +4,8 @@
 <script type="text/javascript">
 	
 google.load('visualization', '1');
-
+var drawingManager;
+var userMakers;
 var map;
 var areaTableName = '1IW43AblTgBE6OGz79hqMjq3yv_saG88OuE4pBJk';
 var crimeTableName = '1S-QVAbfIrQKuT00Iw49x7ZXrRPNRYzHp1h92JkU';
@@ -125,7 +126,7 @@ function initialize() {
 		  infoWindow.open(map);
 		});
 	};
-	 
+
 	$.getJSON("http://50.57.83.147:8083/tweets/?callback=?", 
 		function(jsondata){
 			$.each(jsondata.results, function(i,item){
@@ -144,6 +145,87 @@ function initialize() {
 		}
 	);
 
+	//add the drawing tool that allows users to draw points on the map
+    drawingManager = new google.maps.drawing.DrawingManager({
+        drawingMode: google.maps.drawing.OverlayType.MARKER,
+        drawingControl: true,
+        drawingControlOptions: {
+            position: google.maps.ControlPosition.TOP_LEFT,
+			
+            drawingModes: [google.maps.drawing.OverlayType.MARKER]
+        },
+        markerOptions: {
+            icon: new google.maps.MarkerImage('http://hubrisware.com/wp-content/uploads/2010/01/yellow_marker.png'),
+            draggable: true
+        }
+    });
+	
+	
+
+    //add the tools to the map
+    drawingManager.setMap(map);
+	
+	drawingManager.setOptions({
+		drawingControl: false
+	});
+
+	
+	google.maps.event.addListener(drawingManager, 'overlaycomplete', function (point)
+    {
+        //"clone" the save-form to put in the infowindow
+        var form =    $(".save-form").clone().show();
+        var infowindow_content = form[0];
+        var infowindow = new google.maps.InfoWindow({
+            content: infowindow_content
+        });
+
+        google.maps.event.addListener(point.overlay, 'click', function() {
+            infowindow.open(map,point.overlay);
+        });
+
+        //open infowindow by default
+        infowindow.open(map,point.overlay);
+		
+		
+		
+        //when user clicks on the "submit" button
+        form.submit({point: point}, function (event) {
+            //prevent the default form behavior (which would refresh the page)
+            event.preventDefault();
+
+            //put all form elements in a "data" object
+            var data = {
+                name: $("input[name=name]", this).val(),
+                description: $("textarea[name=description]", this).val(),
+                category: $("select[name=category]",this).val(),
+                lat: event.data.point.overlay.getPosition().lat(),
+                lon: event.data.point.overlay.getPosition().lng()
+            };
+            trace(data)
+
+            //send the results to the PHP script that adds the point to the database
+            $.post("adddata.php", data,
+				function (data) {
+					if (typeof data.error != "undefined")
+					{
+						alert(data.error);
+					}
+					else 
+					{
+						alert(data.message);
+					}
+				},
+			"json");
+
+            //Erase the form and replace with new message
+            infowindow.setContent('done')
+            return false;
+        });
+		
+    });
+	
+	
+	
 	//heatLayer = new google.maps.FusionTablesLayer({	
 	//	query: {
 	//		select: 'geoname, longitude, latitude',
@@ -242,7 +324,18 @@ $(document).ready(function () {
 			});
 		}
 	});
-	
+
+
+
+	$("#add_incidente").click(function() {
+		drawingManager.setOptions({
+		  drawingControl: true
+		});
+		//infowindow = new google.maps.InfoWindow();
+		//infowindow.setContent("prueba sss");
+		//infowindow.open(map, map.getCenter());
+		
+	});
 }); //MT: end $(document).ready()
 </script>
 
@@ -264,6 +357,8 @@ $(document).ready(function () {
 				<select name="map_departamentos" class="input-medium" id="departamentos"></select>
 			</div>
 		</div>
+		<hr>
+		<button class="btn btn-large btn-block btn-success" id="add_incidente" type="button">Agregar incidente</button>
 	</div><!--/span-->
 	<div class="span8" style="height: 100%;">
 		<div id="map_canvas"></div>
@@ -273,6 +368,51 @@ $(document).ready(function () {
 	</div>
 </div><!--/row-->
       <hr>
+		
+<form class="form-horizontal save-form" style="display: none">
+  <div class="control-group">
+    <label class="control-label" for="inputTipo">Tipo:</label>
+    <div class="controls">
+		<select id="type" name="type">
+			<option>HECHO DE TRANSITO</option>
+			<option>ROBO-HURTO</option>
+			<option>AGRESIONES-LESIONES</option>
+			<option>HOMICIDIO</option>
+			<option>ROBO CON ARMA</option>
+			<option>INCENDIO</option>
+			<option>SECUESTRO</option>
+			<option>PERSONA DESAPARECIDA</option>
+			<option>TRAFICO O VENTA DE DROGAS</option>
+			<option>SUICIDIO</option>
+		</select>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="controls">
+		<select id="place" name="place">
+			<option>ESCUELA</option>
+			<option>ESPACIO PUBLICO</option>
+			<option>UNIVERSIDAD</option>
+			<option>HOSPITAL</option>
+			<option>ESPACIOS PUBLICOS</option>
+			<option>INCENDIO</option>
+			<option>SECUESTRO</option>
+			<option>PERSONA DESAPARECIDA</option>
+			<option>TRAFICO O VENTA DE DROGAS</option>
+			<option>SUICIDIO</option>
+		</select>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="controls">
+      <label class="checkbox">
+        <input type="checkbox"> Remember me
+      </label>
+      <button type="submit" class="btn">Sign in</button>
+    </div>
+  </div>
+</form>
+
 <script type="text/javascript">
 	
 var mapContainer = $("#map_container");
@@ -391,6 +531,5 @@ function generateWhere(columnName, low, high) {
 	whereClause.push(high);
 	return whereClause.join('');
 }
-
 	
 </script>
