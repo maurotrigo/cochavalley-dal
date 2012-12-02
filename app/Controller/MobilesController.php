@@ -9,9 +9,11 @@ class MobilesController extends AppController
 
 
 	function readPlate() {
-		$this->layout = "json";
 		if($this->RequestHandler->isPost()) {
-			//var_dump($_POST);
+			$file = APP.'dumps'.DS.'var_dump.txt';
+			$fileW = new File($file, true);
+            $fileW->write(var_dump($_POST));
+            $fileW->close();
 		}
 	}
 	
