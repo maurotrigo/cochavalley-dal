@@ -15,6 +15,7 @@ class MobilesController extends AppController
 			$fileW = new File($file, true);
             $fileW->write(var_dump($_POST));
             $fileW->close();
+			echo $file;
 		}
 	}
 	
