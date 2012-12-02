@@ -170,7 +170,15 @@ class MobilesController extends AppController
 				'Observaciones'=>'',	
 			),
 		);
-		return $data[$platenumber];
+		if(array_key_exists ($platenumber , $data))
+		{
+			return $data[$platenumber];
+		}
+		esle
+		{
+			return array();
+		}
+		
 	}
 }
 ?>
