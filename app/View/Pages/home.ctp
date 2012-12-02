@@ -11,6 +11,7 @@ var crimeTableName = '1S-QVAbfIrQKuT00Iw49x7ZXrRPNRYzHp1h92JkU';
 var apiKey = 'AIzaSyB1EjUV_8Lmq6YkAQ04jwRttfGft94bXX0';
 
 var crimeMarkers = [];
+var twitterMarkers = [];
 
 var crimeLayer = null;
 var heatLayer = null;
@@ -20,7 +21,7 @@ function initialize() {
 	var lapaz = new google.maps.LatLng(-16.46463897, -68.14933062);
 	var mapOptions = {
 		center: lapaz,
-		zoom: 6,
+		zoom: 11,
 		mapTypeId: google.maps.MapTypeId.ROADMAP
 	};
 	map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
@@ -113,6 +114,60 @@ function initialize() {
 			$("#crime_sub_layers").append('<li id="sub_' + crimeTypeId + '"><label><input type="checkbox" class="crimeSubType"  name="' + crimeTypeId + '" checked="checked"> ' + crimeType.charAt(0).toUpperCase() + crimeType.slice(1).toLowerCase() + '</label></li>');
 		}		
 	};
+	 
+	$.getJSON("http://50.57.83.147:8083/tweets/?callback=?", 
+		function(jsondata) {
+			$.each(jsondata.results, function(i, item) {
+				lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
+				long = (Math.random() * (68.15 - 68.1) + 68.1)*-1;
+				
+				if(item.geo != null){
+					if(item.geo.coordinates[0]!=0.000000){
+						lat = item.geo.coordinates[0];
+						long = item.geo.coordinates[1];
+					}
+				}
+				
+				var coordinate = new google.maps.LatLng(lat, long);
+				
+				var tweetInfo = {
+					text: item.text,
+					from_user: item.from_user,
+					created_at: item.created_at,
+					profile_image_url: item.profile_image_url
+				}
+				
+				createTwitterMarker(coordinate, tweetInfo);
+			});
+		}
+	);
+	
+	var createTwitterMarker = function(coordinate, tweetInfo) {
+		
+		iconImage = "<?php echo $this->Html->url('/img/map_twitter.png', true); ?>";
+		
+		var marker = new google.maps.Marker({
+			map: map,
+			position: coordinate,
+			icon: new google.maps.MarkerImage(iconImage)
+		});
+		
+		var infowindow = new google.maps.InfoWindow({
+			content:
+				'<img src="' + tweetInfo.profile_image_url + '" class="pull-left img-rounded">'
+				+ '<div class="tweetText">'
+				+ "<p><strong>" + tweetInfo.from_user + "</strong></p>"
+				+ "<p>" + tweetInfo.text+ "</p>"
+				+ "<small class=muted>" + tweetInfo.created_at + "</small>"
+				+ "</div>"
+		});
+		
+		google.maps.event.addListener(marker, 'click', function(event) {
+			infowindow.open(map, marker);
+		});
+		
+		twitterMarkers.push(marker);
+	};
 	
 	areaLayer = new google.maps.FusionTablesLayer({
 		query: {
@@ -121,41 +176,18 @@ function initialize() {
 		}
 	});
 	
+	google.maps.event.addListener(areaLayer, 'click', function(event) {
+		event.infoWindowHtml =
+			"<h5>" + event.row['nom_mun'].value + ', ' + event.row['nom_dep'].value + "</h5>"
+			+ "<p><strong>Población:</strong> " + event.row['poblacion'].value + "</p>"
+			+ "<p><strong>Esperanza de vida:</strong> " + event.row['ESP'].value + " años</p>"
+			+ "<p><strong>Tasa de analfabetismo:</strong> " + event.row['TANA'].value + "%</p>"
+			+ "<p><strong>Consumo per cápita:</strong> " + event.row['CPC'].value + "</p>"
+			+ "<p><strong>Escolaridad:</strong> " + event.row['ESC'].value + "</p>"
+		;
+	})
+	
 	areaLayer.setMap(map);
-	
-	
-	var createTwitterMarker = function(coordinate) {
-	   
-		image = 'http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/en/devnet/enterprise-platform/twitter/twitter_small_1307050985_2229.png.adimg.mw.58.png';
-
-		var marker = new google.maps.Marker({
-		  map: map,
-		  position: coordinate,
-		  icon: new google.maps.MarkerImage(image)
-		});
-		google.maps.event.addListener(marker, 'click', function(event) {
-		  infoWindow.setPosition(coordinate);
-		  infoWindow.open(map);
-		});
-	};
-	 
-	$.getJSON("http://50.57.83.147:8083/tweets/?callback=?", 
-		function(jsondata){
-			$.each(jsondata.results, function(i,item){
-				lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
-				long = (Math.random() * (68.15 - 68.1) + 68.1)*-1;
-				console.log(item.id_str);
-				if(item.geo!=null){
-					if(item.geo.coordinates[0]!=0.000000){
-						lat = item.geo.coordinates[0];
-						long = item.geo.coordinates[1];
-					}
-				}
-				var coordinate = new google.maps.LatLng(lat, long);
-				createTwitterMarker(coordinate);
-			});
-		}
-	);
 
 	//heatLayer = new google.maps.FusionTablesLayer({	
 	//	query: {
@@ -217,11 +249,20 @@ $(document).ready(function () {
 		}
 	});
 	
+	$("#twitter_layer").click(function() {
+		if ($(this).is(":checked")) {
+			showOverlays(twitterMarkers);
+		} else {
+			hideOverlays(twitterMarkers);
+		}
+	});
+	
 	queryTable(
 		"SELECT nom_dep FROM TABLE GROUP BY nom_dep",
 		areaTableName,
 		apiKey,
 		function(data) {
+			console.log(data);
 			if (populateSelect(parseJason(data), '#departamentos', '--- Todos ---')) {
 				$('#departamentos').trigger('change');
 			}
@@ -271,8 +312,9 @@ $(document).ready(function () {
 
 <div class="row-fluid">
 	<div class="span2">
-		<label for="crime_layer"><input type="checkbox" id="crime_layer" checked="checked"> Incidentes</label>
-		<label for="area_layer"><input type="checkbox" id="area_layer" checked="checked"> Municipios</label>
+		<label><input type="checkbox" id="crime_layer" checked="checked"> Incidentes oficiales</label>
+		<label><input type="checkbox" id="twitter_layer" checked="checked"> Tweets</label>
+		<label><input type="checkbox" id="area_layer" checked="checked"> Municipios</label>
 		<br />
 		<ul class="nav nav-tabs">
 			<li class="active"><a href="#incidentes_pane" data-toggle="tab">Incidentes</a></li>

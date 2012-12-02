@@ -2,7 +2,7 @@
 <html lang="es">
 	<head>
 		<?php echo $this->Html->charset(); ?>
-		<title><?php echo __('CrimenMap').': '.$title_for_layout; ?></title>
+		<title><?php echo __('SeguriMapas').': '.$title_for_layout; ?></title>
 		<?php
 			echo $this->Html->meta('icon');
 	
