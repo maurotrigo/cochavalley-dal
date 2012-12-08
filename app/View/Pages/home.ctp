@@ -118,26 +118,30 @@ function initialize() {
 	$.getJSON("http://50.57.83.147:8083/tweets/?callback=?", 
 		function(jsondata) {
 			$.each(jsondata.results, function(i, item) {
-				lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
-				long = (Math.random() * (68.15 - 68.1) + 68.1)*-1;
+				
+				// SOLO TWEETS CON GEOLOCALIZACION
+				
+				//lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
+				//long = (Math.random() * (68.15 - 68.1) + 68.1)*-1;
 				
 				if(item.geo != null){
 					if(item.geo.coordinates[0]!=0.000000){
 						lat = item.geo.coordinates[0];
 						long = item.geo.coordinates[1];
+						var coordinate = new google.maps.LatLng(lat, long);
+						
+						var tweetInfo = {
+							text: item.text,
+							from_user: item.from_user,
+							created_at: item.created_at,
+							profile_image_url: item.profile_image_url
+						}
+						
+						createTwitterMarker(coordinate, tweetInfo);
 					}
 				}
 				
-				var coordinate = new google.maps.LatLng(lat, long);
-				
-				var tweetInfo = {
-					text: item.text,
-					from_user: item.from_user,
-					created_at: item.created_at,
-					profile_image_url: item.profile_image_url
-				}
-				
-				createTwitterMarker(coordinate, tweetInfo);
+
 			});
 		}
 	);
@@ -237,6 +241,7 @@ function initialize() {
 					
 					if(typeof item.Message.message!='undefined'){
 						
+						//randomico para probar concepto de SMS
 						lat = (Math.random() * (16.5 - 16.49) + 16.49)*-1;
 						long = (Math.random() * (68.15 - 68.1) + 68.1)*-1;
 						
@@ -312,7 +317,7 @@ function initialize() {
             drawingModes: [google.maps.drawing.OverlayType.MARKER]
         },
         markerOptions: {
-            icon: new google.maps.MarkerImage('http://hubrisware.com/wp-content/uploads/2010/01/yellow_marker.png'),
+            icon: new google.maps.MarkerImage('<?php echo $this->Html->url('/img/map_user.png', true); ?>'),
             draggable: true
         }
     });
@@ -459,10 +464,10 @@ $(document).ready(function () {
 		createSmsM(coordinate, Info);
 	});
   
-	$('#date').datepicker({
+	/*$('#date').datepicker({
 		format: 'dd-mm-yyyy'
-	});
-		
+	});*/
+			
 	$("#area_layer").click(function() {
 		areaLayer.setMap(($(this).is(":checked") ? map : null));
 	});
@@ -565,6 +570,9 @@ $(document).ready(function () {
 		  drawingControl: true
 		});
 		drawingManager.setMap(map);
+		
+		$("#date").datepicker();
+
 		//infowindow = new google.maps.InfoWindow();
 		//infowindow.setContent("prueba sss");
 		//infowindow.open(map, map.getCenter());
@@ -723,7 +731,7 @@ $(document).ready(function () {
   <div class="control-group">
     <label class="control-label" for="inputTipo">Fecha:</label>
     <div class="controls">
-		<input type="text" class="span8" value="16-12-2012" id="date" name="date" >
+		<input type="text" id="date" name="date" value="08-12-2012" />
 	</div>
   </div>
   <div class="control-group">

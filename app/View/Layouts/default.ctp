@@ -6,8 +6,8 @@
 		<?php
 			echo $this->Html->meta('icon');
 	
-			echo $this->Html->css(array('bootstrap.min', 'aq','datepicker'));
-			echo $this->Html->script(array('https://www.google.com/jsapi', 'jquery.min', 'jquery-ui.min', 'bootstrap.min', 'bootstrap-datepicker', 'https://maps.googleapis.com/maps/api/js?key=AIzaSyB1EjUV_8Lmq6YkAQ04jwRttfGft94bXX0&sensor=true&libraries=places,drawing', 'map'));
+			echo $this->Html->css(array('bootstrap.min', 'aq','datepicker','http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css'));
+			echo $this->Html->script(array('https://www.google.com/jsapi', 'jquery.min', 'jquery-ui.min', 'bootstrap.min', 'bootstrap-datepicker', 'http://code.jquery.com/ui/1.9.2/jquery-ui.js', 'https://maps.googleapis.com/maps/api/js?key=AIzaSyB1EjUV_8Lmq6YkAQ04jwRttfGft94bXX0&sensor=true&libraries=places,drawing', 'map'));
 		?>
 	</head>
 	<body>
