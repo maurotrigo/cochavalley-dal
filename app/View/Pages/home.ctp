@@ -570,10 +570,78 @@ $(document).ready(function () {
 		//infowindow.open(map, map.getCenter());
 	});
 	
-
+	$('#city').change(function() {
+		var selectedValue = $(this).find('option:selected').val();
+		
+		if (selectedValue == 'Cochabamba') {
+			map.setCenter(new google.maps.LatLng( -17.384716084990472, -66.16741561330855 ) );
+		}else if (selectedValue == 'Cobija') {
+			map.setCenter(new google.maps.LatLng( -11.029831069146613, -68.76043510157615 ) );
+		}
+		else if (selectedValue == 'El Alto') {
+			map.setCenter(new google.maps.LatLng( -16.5081869804345, -68.1695766421035 ) );
+		}
+		else if (selectedValue == 'La Paz') {
+			map.setCenter(new google.maps.LatLng(-16.492715338879044, -68.17997359670699 ) );
+		}
+		else if (selectedValue == 'Oruro') {
+			map.setCenter(new google.maps.LatLng(-17.98918266463051, -67.11154178716242 ) );
+		}
+		else if (selectedValue == 'Potosi') {
+			map.setCenter(new google.maps.LatLng(-19.575317892869453, -65.77670291997492 ) );
+		}
+		else if (selectedValue == 'Santa Cruz') {
+			map.setCenter(new google.maps.LatLng(-17.790535393588964, -63.186882028821856 ) );
+		}
+		else if (selectedValue == 'Sucre') {
+			map.setCenter(new google.maps.LatLng(-19.051733665039155, -65.27055360842496 ) );
+		}
+		else if (selectedValue == 'Tarija') {
+			map.setCenter(new google.maps.LatLng(-21.51440672003028, -64.72673036623746 ) );
+		}
+		else if (selectedValue == 'Tarija') {
+			map.setCenter(new google.maps.LatLng(-21.51440672003028, -64.72673036623746 ) );
+		}
+		else if (selectedValue == 'Trinidad') {
+			map.setCenter(new google.maps.LatLng(-14.833965277394848, -64.90742111694999 ) );
+		}
+	});
 	
 }); //MT: end $(document).ready()
 </script>
+
+
+<div class="row-fluid">
+	
+	<div class="span10">
+		<form class="form-inline">
+			<label class="select">
+			Pais:
+			</label>
+			<select id="country" name="country">
+				<option selected>Bolivia</option>
+			</select>
+			<label class="select">
+			Ciudad:
+			</label>
+			<select id="city" name="city">
+				<option>Cobija</option>
+				<option>Cochabamba</option>
+				<option>El Alto</option>
+				<option selected>La Paz</option
+				<option>Oruro</option>
+				<option>Potosi</option>
+				<option>Santa Cruz</option>
+				<option>Sucre</option>
+				<option>Tarija</option>
+				<option>Trinidad</option>
+			</select>
+			<span class="alert alert-warning inline">
+				<small>Pronto nuevos paises y ciudades.</small>
+			</span>
+		</form>
+	</div>
+</div>
 
 <div class="row-fluid">
 	<div class="span2">
